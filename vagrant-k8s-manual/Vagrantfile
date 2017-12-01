@@ -1,0 +1,96 @@
+$VirtualSwitchName = "External"
+
+LINUX_IMAGE = "kmm/ubuntu-xenial64"
+IMAGE = "WindowsServer1709-Containers"
+
+Vagrant.configure("2") do |config|
+    config.vm.define "k-builder" do |subconfig|
+        subconfig.vm.box = LINUX_IMAGE
+        subconfig.vm.hostname = "k-builder"
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+        subconfig.vm.synced_folder "../vagrant-synced/", "/vagrant", type: "smb"
+        subconfig.vm.provision "shell", path: "00-ubuntu.sh"
+        subconfig.vm.provision "shell", path: "01-builder.sh"
+        subconfig.vm.provider "hyperv" do |h|
+            h.enable_virtualization_extensions = true
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 1024
+            h.maxmemory = 4096
+            h.vmname = "k-builder"
+        end   
+    end    
+    config.vm.define "k-m1" do |subconfig|
+        subconfig.vm.box = LINUX_IMAGE
+        subconfig.vm.hostname = "k-m1"
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+        subconfig.vm.synced_folder "../vagrant-synced/", "/vagrant", type: "smb"
+        subconfig.vm.provision "shell", path: "00-ubuntu.sh"
+        subconfig.vm.provision "shell", path: "01-kubernetes.sh"
+        subconfig.vm.provision "shell", path: "02-master.sh"
+        subconfig.vm.provider "hyperv" do |h|
+            h.enable_virtualization_extensions = true
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 2048
+            h.maxmemory = 4096
+            h.vmname = "k-m1"
+        end   
+    end
+    # # Not currently using Linux worker
+    # config.vm.define "k-l-w1" do |subconfig|
+    #     subconfig.vm.box = LINUX_IMAGE
+    #     subconfig.vm.hostname = "k-l-w1"
+    #     subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+    #     subconfig.vm.synced_folder "../vagrant-synced/kube", "/vagrant", type: "smb"
+    #     subconfig.vm.provision "shell", path: "00-ubuntu.sh"
+    #     subconfig.vm.provision "shell", path: "01-kubernetes.sh"
+    #     subconfig.vm.provision "shell", path: "02-worker.sh"
+    #     subconfig.vm.provider "hyperv" do |h|
+    #         h.enable_virtualization_extensions = true
+    #         h.differencing_disk = true
+    #         h.cpus = 4
+    #         h.memory = 1024
+    #         h.maxmemory = 4096
+    #         h.vmname = "k-l-w1"
+    #     end   
+    # end
+    config.vm.define "k-w-w1" do |subconfig|
+        subconfig.vm.box = IMAGE
+        subconfig.vm.communicator = "winrm"
+        subconfig.vm.hostname = "k-w-w1"
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+        #subconfig.vm.synced_folder ".", "/vagrant", disabled: true
+        #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
+        subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", privileged: true
+        subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 192.168 -counter 1", privileged: true
+        subconfig.vm.provider "hyperv" do |h|
+            h.enable_virtualization_extensions = true
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 1024
+            h.maxmemory = 4096
+            h.vmname = "k-w-w1"
+        end   
+    end
+    config.vm.define "k-w-w2" do |subconfig|
+        subconfig.vm.box = IMAGE
+        subconfig.vm.communicator = "winrm"
+        subconfig.vm.hostname = "k-w-w2"
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+        #subconfig.vm.synced_folder ".", "/vagrant", disabled: true
+        #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
+        subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", privileged: true
+        subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 192.168 -counter 2", privileged: true
+        subconfig.vm.provider "hyperv" do |h|
+            h.enable_virtualization_extensions = true
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 1024
+            h.maxmemory = 4096
+            h.vmname = "k-w-w2"
+        end   
+    end
+end
