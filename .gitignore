@@ -1,1 +1,3 @@
 .vagrant
+/vagrant-synced/*
+!/vagrant-synced/readme.md
