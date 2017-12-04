@@ -1,3 +1,6 @@
+Param(
+    $ClusterCIDR="192.168.0.0/16"
+)
 "...Info about this box..."
 Get-WmiObject -Class Win32_OperatingSystem | ForEach-Object -MemberName Caption
 (Get-ItemProperty -Path c:\windows\system32\hal.dll).VersionInfo.FileVersion
@@ -16,6 +19,7 @@ docker build -t kubeletwin/pause .
 Get-Item c:/k/config
 Get-Content c:/k/config
 
-start-process powershell.exe ./start-kubelet.ps1
-start-process powershell.exe ./start-kubeproxy.ps1 
+"Run these commands to continue:"
+"start-process powershell.exe ./start-kubelet.ps1 -clusterCIDR $ClusterCIDR"
+"start-process powershell.exe ./start-kubeproxy.ps1"
 

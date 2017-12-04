@@ -3,7 +3,7 @@
 #####################################################################################
 #Install necessary components
 sudo apt-get update
-sudo apt-get install -y curl git build-essential docker.io conntrack 
+sudo apt-get install -y build-essential docker.io  
 #add vagrant user to docker
 sudo usermod -a -G docker vagrant
 #####################################################################################

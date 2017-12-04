@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
         subconfig.vm.synced_folder "../vagrant-synced/", "/vagrant", type: "smb"
         subconfig.vm.provision "shell", path: "00-ubuntu.sh"
         subconfig.vm.provision "shell", path: "01-kubernetes.sh"
-        subconfig.vm.provision "shell", path: "02-master.sh"
+        subconfig.vm.provision "shell", path: "02-master.sh", args: "10.4"
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
@@ -60,11 +60,12 @@ Vagrant.configure("2") do |config|
         subconfig.vm.communicator = "winrm"
         subconfig.vm.hostname = "k-w-w1"
         subconfig.vm.network :public_network, bridge: $VirtualSwitchName
-        #subconfig.vm.synced_folder ".", "/vagrant", disabled: true
+        subconfig.vm.synced_folder ".", "/vagrant", disabled: true
         #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
         subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
-        subconfig.vm.provision "shell", path: "./00-windows.ps1", privileged: true
-        subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 192.168 -counter 1", privileged: true
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", args: "-ClusterCIDR 10.4.0.0/16", privileged: true
+        # No point until the master blocks progress while waiting for control plane to come online
+        #subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 10.4 -counter 1", privileged: true
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
@@ -79,11 +80,11 @@ Vagrant.configure("2") do |config|
         subconfig.vm.communicator = "winrm"
         subconfig.vm.hostname = "k-w-w2"
         subconfig.vm.network :public_network, bridge: $VirtualSwitchName
-        #subconfig.vm.synced_folder ".", "/vagrant", disabled: true
+        subconfig.vm.synced_folder ".", "/vagrant", disabled: true
         #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
         subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
-        subconfig.vm.provision "shell", path: "./00-windows.ps1", privileged: true
-        subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 192.168 -counter 2", privileged: true
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", args: "-ClusterCIDR 10.4.0.0/16", privileged: true
+        #subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 10.4 -counter 2", privileged: true
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
