@@ -16,6 +16,8 @@ SRC_DIR="/home/vagrant/src/k8s/"
 BRANCH="release-1.9"
 REPO_URL="https://github.com/kubernetes/kubernetes.git"
 
+DIST_DIR="/vagrant/kube-win/"
+
 if [ -d ${DIST_DIR} ]; 
 then (echo "Directory exists: ${DIST_DIR}");
 else (mkdir -p ${DIST_DIR});
@@ -26,7 +28,7 @@ then (
     cd $SRC_DIR && git checkout $BRANCH && git pull
     ); 
 else (
-    git clone --progress --depth 1 $REPO_URL $SRC_DIR && cd $SRC_DIR && git checkout $BRANCH
+    git clone --progress --depth 1 $REPO_URL $SRC_DIR -b $BRANCH && cd $SRC_DIR 
     );
 fi
 

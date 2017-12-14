@@ -1,42 +1,80 @@
 # Kubernetes On-Premises Deployment From Scratch -- Start to Finish #
 
-**Future goal:** This guide will walk you through deploying *Kubernetes 1.9* on a Linux master and join two Windows nodes to it without a cloud provider.
+**Goal:** This guide will walk you through deploying *Kubernetes 1.9* on a Linux master and join two Windows nodes to it without a cloud provider.
+You should be able to use this guide to have a working cluster with 2 Windows nodes within about 3 hours (as short as 80 minutes given my experience).
 
-This is based on work at https://github.com/Microsoft/SDN/blob/k8s-guide/Kubernetes/HOWTO-on-prem.md
+This is based on [GitHub docs from Microsoft](https://github.com/Microsoft/SDN/blob/k8s-guide/Kubernetes/HOWTO-on-prem.md)
 
 All directories should have a README to convey its purpose
 
 ## Current status ##
 
 - Focused on `./vagrant-k8s-manual/` work
-  - Not fully functional yet to get a working cluster
+  - Stands up a working Windows worker cluster (deployments can be created)
   - Leverages Vagrant 2.0 and Hyper-V
   - `k-builder` builds windows binaries and places them and other resources in `./vagrant-synced/` for subsequent Vagrant instances to leverage
-  - `k-m1` preps an instance so you can login and run a few commands in two `vagrant ssh` sessions
-    ```
-    sudo su -
-    cd /root/kube
-    ./start-kubelet.sh
-    ```
-    ```
-    sudo su -
-    cd /root/kube
-    ./start-kubeproxy.sh 192.168
-    ```
-  - Using v1.9.0-beta.1 for master, and branch release-1.9 for building Windows binaries
-  - The master runs but missing heapster, dashboard, etc
-  - `k-w-w1` preps a windows worker with a pause image
-  - You can use `kubectl` to connect to the master by copying the config from `./vagrant-synced/kube/config` to `~/.kube/config`
+  - `k-m1` preps an instance with control plane running
+  - Using v1.9.0-beta.2 precompiled/downloaded binaries for master, and branch release-1.9 for building Windows binaries
+  - Windows worker nodes `k-w-w1` and `k-w-w2` ready to join the cluster
+  - You can use `kubectl` on your system to connect to the master by copying the config from `./vagrant-synced/kube/config` to `~/.kube/config`
+
+## Usage ##
+
+- Ensure requirements below are met
+- Update Vagrantfile at `./vagrant-k8s-manual/Vagrantfile` 
+  - Set the Cluster CIDR you want to use. I chose 10.4.0.0/16 as a unique network that won't collide with other networks. You want to choose a range that overlaps with the external IPs that the nodes will get so they have routing to each other by default
+- Open Powershell Administrator prompt
+- CD to repo location
+- CD to `./vagrant-k8s-manual/`
+```
+# do you need windows binaries? if you already have exe files for kubectl, kubelet, kube-proxy, place them in `../vagrant-synced/kube-win/`
+vagrant up k-builder
+# enter credentials that can access `../vagrant-synced/` as an SMB share. Administrator rights required.
+# wait approximately 30 minutes for Windows binaries to be compiled and placed in `../vagrant-synced/kube-win/`
+# you will likely build windows binaries once if at all
+vagrant up
+# wait approximately 10 minutes for k-m1 to complete
+# at this point you can check the dashboard via kubectl proxy below if you're interested
+# wait approximately 20 minutes for k-w-w1 to come up, with majority of time for WinRM copy of kube*.exe to node
+# wait approximately 20 minutes for k-w-w2 to come up for the same reason
+```
+Login to each `k-w-w1` and `k-w-w2` (via Hyper-V Manager) and run via Powershell (due to TODO in 00-windows.ps1 provisioning script)
+```
+#NOTE: (Replace with your chosen ClusterCIDR)
+$ClusterCIDR="10.4.0.0/16"
+
+Start-Job -Name kubelet {c:\k\start-kubelet.ps1 -clusterCIDR $ClusterCIDR *> c:\k\kubelet-logs.txt}
+Start-Job -Name kubeproxy {c:\k\start-kubeproxy.ps1 *> c:\k\kubeproxy-logs.txt}
+```
+Continue with kubectl to view the cluster info
+```
+cp ../vagrant-synced/kube/config ~/.kube/config
+kubectl cluster-info
+kubectl proxy
+# navigate web browser to http://localhost:8001/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/#!/node?namespace=_all
+```
+
+## Other directories ##
+
 - Previous work on `./vagrant-k8s-kubeadm-vanilla/` was used for testing v1.8 kubeadm to standup a master and join a Linux worker node
   - This creates a functioning master in `vagrant up`
   - Manual step to grab the `kubeadm join` command and run from the worker
 
 ## Requirements ##
 
-- RAM: 3GB RAM for Master, 1GB RAM for each Windows worker (minimums)
+- RAM: 5GB RAM for Master, 2GB RAM for each Windows worker
 - Vagrant 2.0
 - Hyper-V
 - Vagrant box created for Windows Server 1709 with Containers feature and Docker installed per https://git.tmaws.io/robert.morse/vagrant-hyperv-windows or similar
 - Internet connectivity for connecting to GitHub, and also download Kubernetes bits
 
 **Note:** `./Setup-Environment.ps1` may or may not help to install the Requirements listed above
+
+## Known issues ##
+
+- Windows nodes do not join automatically as part of `vagrant up`. This is due to some issue with **Start-Job** running in the context of Vagrant and then disconnecting, perhaps.
+- Windows nodes do not report CPU or RAM metrics
+- Vagrant SMB synced folder to Windows nodes does not work, and the file provisioner to copy files is abhorrently slow (15 minutes to copy 250MB)
+- SMB synced folder does not accept parameters for some reason. This means typing in the username/password for SMB sync a couple minutes into the standup of each Linux instance
+- Windows kube-proxy uses **userspace** due to an issue in 1.9.beta.2, and can now be tested, but has yet to be verified here
+- kube-dns on the master gets into a crash loop and is likely due to a configuration error

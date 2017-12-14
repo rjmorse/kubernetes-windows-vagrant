@@ -32,8 +32,8 @@ fi
 #####################################################################################
 # Clone k8s guide
 SRC_DIR="/vagrant/k8s-guide/"
-BRANCH="k8s-guide"
-REPO_URL="https://github.com/Microsoft/SDN"
+BRANCH="prenetworkcleanup "
+REPO_URL="https://github.com/rjmorse/SDN"
 
 
 if [ -d $SRC_DIR ]; 

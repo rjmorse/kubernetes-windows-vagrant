@@ -16,7 +16,7 @@ cat /proc/swaps
 
 cd $HOME
 #install linux binaries per https://github.com/Microsoft/SDN/blob/k8s-guide/Kubernetes/HOWTO-on-prem.md#installing-the-linux-binaries
-wget --quiet -O kubernetes.tar.gz https://github.com/kubernetes/kubernetes/releases/download/v1.9.0-beta.1/kubernetes.tar.gz
+wget --quiet -O kubernetes.tar.gz https://github.com/kubernetes/kubernetes/releases/download/v1.9.0-beta.2/kubernetes.tar.gz
 tar -xzf kubernetes.tar.gz #removed -v for verbose
 cd kubernetes/cluster 
 # follow the prompts from this command:
@@ -24,6 +24,7 @@ cd kubernetes/cluster
 cd ../server
 tar -xzf kubernetes-server-linux-amd64.tar.gz #removed -v for verbose
 cd kubernetes/server/bin
+ls -lah 
 
 # TODO: check that this PATH is not creating a problem
 # changed from $HOME to /vagrant. Have to mkdir since the bin isn't there regardless

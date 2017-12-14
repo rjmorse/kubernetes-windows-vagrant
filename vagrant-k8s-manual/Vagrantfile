@@ -1,10 +1,13 @@
 $VirtualSwitchName = "External"
 
-LINUX_IMAGE = "kmm/ubuntu-xenial64"
+LINUX_IMAGE = "generic/ubuntu1604"
+
 IMAGE = "WindowsServer1709-Containers"
+ClusterCIDR = "10.4.0.0/16"
+ClusterCIDRShort = "10.4"
 
 Vagrant.configure("2") do |config|
-    config.vm.define "k-builder" do |subconfig|
+    config.vm.define "k-builder", autostart: false do |subconfig|
         subconfig.vm.box = LINUX_IMAGE
         subconfig.vm.hostname = "k-builder"
         subconfig.vm.network :public_network, bridge: $VirtualSwitchName
@@ -27,34 +30,54 @@ Vagrant.configure("2") do |config|
         subconfig.vm.synced_folder "../vagrant-synced/", "/vagrant", type: "smb"
         subconfig.vm.provision "shell", path: "00-ubuntu.sh"
         subconfig.vm.provision "shell", path: "01-kubernetes.sh"
-        subconfig.vm.provision "shell", path: "02-master.sh", args: "10.4"
+        subconfig.vm.provision "shell", path: "02-master.sh", :args => [ClusterCIDR, ClusterCIDRShort]
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
             h.cpus = 4
-            h.memory = 2048
-            h.maxmemory = 4096
+            h.memory = 5000
+            h.maxmemory = 5000
             h.vmname = "k-m1"
         end   
     end
-    # # Not currently using Linux worker
-    # config.vm.define "k-l-w1" do |subconfig|
-    #     subconfig.vm.box = LINUX_IMAGE
-    #     subconfig.vm.hostname = "k-l-w1"
-    #     subconfig.vm.network :public_network, bridge: $VirtualSwitchName
-    #     subconfig.vm.synced_folder "../vagrant-synced/kube", "/vagrant", type: "smb"
-    #     subconfig.vm.provision "shell", path: "00-ubuntu.sh"
-    #     subconfig.vm.provision "shell", path: "01-kubernetes.sh"
-    #     subconfig.vm.provision "shell", path: "02-worker.sh"
-    #     subconfig.vm.provider "hyperv" do |h|
-    #         h.enable_virtualization_extensions = true
-    #         h.differencing_disk = true
-    #         h.cpus = 4
-    #         h.memory = 1024
-    #         h.maxmemory = 4096
-    #         h.vmname = "k-l-w1"
-    #     end   
-    # end
+    # Not currently using Linux worker, and untested
+    config.vm.define "k-l-w1", autostart: false do |subconfig|
+        subconfig.vm.box = LINUX_IMAGE
+        subconfig.vm.hostname = "k-l-w1"
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
+        subconfig.vm.synced_folder "../vagrant-synced/kube", "/vagrant", type: "smb"
+        subconfig.vm.provision "shell", path: "00-ubuntu.sh"
+        subconfig.vm.provision "shell", path: "01-kubernetes.sh"
+        subconfig.vm.provision "shell", path: "02-worker.sh"
+        subconfig.vm.provider "hyperv" do |h|
+            h.enable_virtualization_extensions = true
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 1024
+            h.maxmemory = 4096
+            h.vmname = "k-l-w1"
+        end   
+    end
+    # TODO: add routes to Linux pods from Windows; depends on HNS config currently in **start-kubelet.ps1**
+    # Error output below if **start-kubelet.ps1** has not be ran successfully
+    # ==> k-w-w1: Running provisioner: shell...
+    # k-w-w1: Running: ./01-routes.ps1 as c:\tmp\vagrant-shell.ps1
+    # k-w-w1: Add-RouteToPodCIDR - available nodes linux     10.4.0.0/24
+    # k-w-w1: Adding route for Remote Pod CIDR 10.4.0.0/24, GW 10.4.0.1, for node type linux
+    # k-w-w1: new-netroute : Invalid parameter InterfaceAlias vEthernet (cbr0)
+    # k-w-w1: At C:\k\AddRoutes.ps1:27 char:13
+    # k-w-w1: +             new-netroute -InterfaceAlias "$nicName" -DestinationPrefi ...
+    # k-w-w1: +             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # k-w-w1:     + CategoryInfo          : InvalidArgument: (MSFT_NetRoute:ROOT/StandardCimv2/MSFT_NetRoute) [New-NetRoute], CimExc
+    # k-w-w1:    eption
+    # k-w-w1:     + FullyQualifiedErrorId : Windows System Error 87,New-NetRoute
+    # k-w-w1: C:\k\AddRoutes.ps1 : Do you have a virtual adapter configured? Couldn't find one!
+    # k-w-w1: At C:\tmp\vagrant-shell.ps1:7 char:1
+    # k-w-w1: + c:\k\AddRoutes.ps1 -MasterIp $mip -Gateway "$ClusterCIDR.$counter.2"
+    # k-w-w1: + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # k-w-w1:     + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    # k-w-w1:     + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,AddRoutes.ps1
+
     config.vm.define "k-w-w1" do |subconfig|
         subconfig.vm.box = IMAGE
         subconfig.vm.communicator = "winrm"
@@ -63,15 +86,14 @@ Vagrant.configure("2") do |config|
         subconfig.vm.synced_folder ".", "/vagrant", disabled: true
         #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
         subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
-        subconfig.vm.provision "shell", path: "./00-windows.ps1", args: "-ClusterCIDR 10.4.0.0/16", privileged: true
-        # No point until the master blocks progress while waiting for control plane to come online
-        #subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 10.4 -counter 1", privileged: true
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", :args => ["-ClusterCIDR", ClusterCIDR], privileged: true
+        #subconfig.vm.provision "shell", path: "./01-routes.ps1", :args => ["-ClusterCIDR", ClusterCIDRShort, "-counter", "1"], privileged: true
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
             h.cpus = 4
-            h.memory = 1024
-            h.maxmemory = 4096
+            h.memory = 2048
+            h.maxmemory = 2048 
             h.vmname = "k-w-w1"
         end   
     end
@@ -83,15 +105,17 @@ Vagrant.configure("2") do |config|
         subconfig.vm.synced_folder ".", "/vagrant", disabled: true
         #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb" #experienced issues with permissions, perhaps user error though
         subconfig.vm.provision "file", source: "../vagrant-synced/kube-win", destination: "c:/k"
-        subconfig.vm.provision "shell", path: "./00-windows.ps1", args: "-ClusterCIDR 10.4.0.0/16", privileged: true
-        #subconfig.vm.provision "shell", path: "./01-routes.ps1", args: "-ClusterCIDR 10.4 -counter 2", privileged: true
+        subconfig.vm.provision "shell", path: "./00-windows.ps1", :args => ["-ClusterCIDR", ClusterCIDR], privileged: true
+        #subconfig.vm.provision "shell", path: "./01-routes.ps1", :args => ["-ClusterCIDR", ClusterCIDRShort, "-counter", "2"], privileged: true
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
             h.cpus = 4
-            h.memory = 1024
-            h.maxmemory = 4096
+            h.memory = 2048
+            h.maxmemory = 2048
             h.vmname = "k-w-w2"
         end   
     end
+
+
 end

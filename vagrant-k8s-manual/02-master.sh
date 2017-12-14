@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-CLUSTER=$1
+FULL_CLUSTER=$1
+CLUSTER=$2
 
 cd /vagrant/kube
 MASTER_IP=$(ifconfig eth0 | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
@@ -9,7 +10,7 @@ cd /vagrant/kube/certs
 ./generate-certs.sh $MASTER_IP
 
 cd /vagrant/kube/manifest
-./generate.py $MASTER_IP --cluster-cidr $CLUSTER.0.0/16
+./generate.py $MASTER_IP --cluster-cidr $FULL_CLUSTER
 rm ./generate.py
 
 cp -R /vagrant/* /root
@@ -26,13 +27,23 @@ sudo cp ~/.kube/config /root/kube/kubelet/config #critical this is here
 
 cd /vagrant/kube
 ls -lah
-echo "You'll want to run the below commands as root from /root/kube/"
-echo "./start-kubelet.sh &"
-echo "./generate-routes.sh $CLUSTER &" 
-echo "Let's do that anyway..."
+echo "now running:"
+echo "cd /vagrant/kube"
+echo "./start-kubelet.sh $CLUSTER &> /vagrant/master-kubelet-logs.txt &disown"
+echo "./start-kubeproxy.sh $CLUSTER &> /vagrant/master-kubeproxy-logs.txt &disown"
+echo "./generate-routes.sh $CLUSTER &> /vagrant/master-routes.txt &disown"
 
-./start-kubelet.sh &
-./generate-routes.sh $CLUSTER &
+cd /vagrant/kube
+./start-kubelet.sh $CLUSTER &> /vagrant/master-kubelet-logs.txt &disown
+./start-kubeproxy.sh $CLUSTER &> /vagrant/master-kubeproxy-logs.txt &disown
+./generate-routes.sh $CLUSTER &> /vagrant/master-routes.txt &disown
+
 docker ps
-sleep 20
+docker images
+echo "waiting 10s before next update"
+sleep 10
 docker ps
+docker images
+tail -n 10 /vagrant/master-kubelet-logs.txt
+
+echo "done. continuing..."
