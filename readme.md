@@ -65,7 +65,7 @@ kubectl proxy
 - RAM: 5GB RAM for Master, 2GB RAM for each Windows worker
 - Vagrant 2.0
 - Hyper-V
-- Vagrant box created for Windows Server 1709 with Containers feature and Docker installed per https://git.tmaws.io/robert.morse/vagrant-hyperv-windows or similar
+- Vagrant box created for Windows Server 1709 with Containers feature and Docker installed per [Vagrant Box instructions](https://github.com/rjmorse/vagrant-hyperv-windows) or similar
 - Internet connectivity for connecting to GitHub, and also download Kubernetes bits
 
 **Note:** `./Setup-Environment.ps1` may or may not help to install the Requirements listed above
