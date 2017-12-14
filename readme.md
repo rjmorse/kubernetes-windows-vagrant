@@ -1,9 +1,10 @@
-# Kubernetes On-Premises Deployment From Scratch -- Start to Finish #
+# Kubernetes v1.9 with Windows Workers - Vagrant Multi-Machine Setup #
 
-**Goal:** This guide will walk you through deploying *Kubernetes 1.9* on a Linux master and join two Windows nodes to it without a cloud provider.
+## Goal: ##
+This guide will help you stand up a local Kubernetes cluster in Hyper-V VMs through Vagrant.
 You should be able to use this guide to have a working cluster with 2 Windows nodes within about 3 hours (as short as 80 minutes given my experience).
 
-This is based on [GitHub docs from Microsoft](https://github.com/Microsoft/SDN/blob/k8s-guide/Kubernetes/HOWTO-on-prem.md)
+This is based on [GitHub docs from Microsoft](https://github.com/Microsoft/SDN/blob/k8s-guide/Kubernetes/HOWTO-on-prem.md) and you should at least read that before diving in here.
 
 All directories should have a README to convey its purpose
 
