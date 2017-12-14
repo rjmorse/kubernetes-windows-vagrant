@@ -76,5 +76,4 @@ kubectl proxy
 - Windows nodes do not report CPU or RAM metrics
 - Vagrant SMB synced folder to Windows nodes does not work, and the file provisioner to copy files is abhorrently slow (15 minutes to copy 250MB)
 - SMB synced folder does not accept parameters for some reason. This means typing in the username/password for SMB sync a couple minutes into the standup of each Linux instance
-- Windows kube-proxy uses **userspace** due to an issue in 1.9.beta.2, and can now be tested, but has yet to be verified here
 - kube-dns on the master gets into a crash loop and is likely due to a configuration error
