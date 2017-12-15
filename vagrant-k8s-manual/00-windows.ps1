@@ -11,8 +11,8 @@ ls c:/k/
 
 docker system info
 docker images
-docker pull microsoft/windowsservercore:1709_KB4048955
-docker tag microsoft/windowsservercore:1709_KB4048955 microsoft/windowsservercore:latest
+docker pull microsoft/windowsservercore:1709
+docker tag microsoft/windowsservercore:1709 microsoft/windowsservercore:latest
 docker build -t kubeletwin/pause .
 
 #This file should have been created by the master, placed in the synced folder, and then copied to c:/k upon Vagrant provisioning

@@ -36,10 +36,10 @@ vagrant up k-builder
 vagrant up
 # wait approximately 10 minutes for k-m1 to complete
 # at this point you can check the dashboard via kubectl proxy below if you're interested
-# wait approximately 20 minutes for k-w-w1 to come up, with majority of time for WinRM copy of kube*.exe to node
-# wait approximately 20 minutes for k-w-w2 to come up for the same reason
+# wait approximately 10 minutes for k-w-w1 to come up, with majority of time for WinRM copy of kube*.exe to node
+# wait approximately 10 minutes for k-w-w2 to come up for the same reason
 ```
-Login to each `k-w-w1` and `k-w-w2` (via Hyper-V Manager) and run via Powershell (due to TODO in 00-windows.ps1 provisioning script)
+Login to each `k-w-w1` and `k-w-w2` (via `vagrant rdp k-w-w1` or Hyper-V Manager) and run via Powershell (due to TODO in 00-windows.ps1 provisioning script)
 ```
 #NOTE: (Replace with your chosen ClusterCIDR)
 $ClusterCIDR="10.4.0.0/16"
@@ -66,7 +66,12 @@ kubectl proxy
 - RAM: 5GB RAM for Master, 2GB RAM for each Windows worker
 - Vagrant 2.0
 - Hyper-V
-- Vagrant box created for Windows Server 1709 with Containers feature and Docker installed per [Vagrant Box instructions](https://github.com/rjmorse/vagrant-hyperv-windows) or similar
+- Vagrant box created for Windows Server 1709 with Containers feature and Docker installed per [Vagrant/Packer Box instructions](https://github.com/StefanScherer/packer-windows) or similar
+  - Box generation takes roughly 1 hr, which includes caching the 1709 Docker images
+  ```
+  packer build --only hyperv-iso -var 'hyperv_switchname=External' -var 'iso_url=c:/images/en_windows_server_version_1709_x64_dvd_100090904.iso' .\windows_server_1709_docker.json
+  vagrant box add windows_server_1709_docker_hyperv.box --name WindowsServer1709Docker
+  ```
 - Internet connectivity for connecting to GitHub, and also download Kubernetes bits
 
 **Note:** `./Setup-Environment.ps1` may or may not help to install the Requirements listed above
@@ -75,6 +80,6 @@ kubectl proxy
 
 - Windows nodes do not join automatically as part of `vagrant up`. This is due to some issue with **Start-Job** running in the context of Vagrant and then disconnecting, perhaps.
 - Windows nodes do not report CPU or RAM metrics
-- Vagrant SMB synced folder to Windows nodes does not work, and the file provisioner to copy files is abhorrently slow (15 minutes to copy 250MB)
+- Vagrant SMB synced folder to Windows nodes does not work, and the file provisioner to copy files is slow (~5 minutes to copy 250MB)
 - SMB synced folder does not accept parameters for some reason. This means typing in the username/password for SMB sync a couple minutes into the standup of each Linux instance
-- kube-dns on the master gets into a crash loop and is likely due to a configuration error
+- kube-dns on the master gets into a crash loop and is likely due to a configuration error or could be related to https://github.com/kubernetes/kubernetes/issues/56902
