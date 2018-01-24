@@ -12,7 +12,7 @@ do
 done
 
 sudo apt-get update
-sudo apt-get install -y git conntrack curl 
+sudo apt-get install -y git conntrack curl python
 
 #####################################################################################
 # Make directories

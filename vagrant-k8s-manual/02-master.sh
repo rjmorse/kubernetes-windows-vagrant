@@ -3,13 +3,20 @@ FULL_CLUSTER=$1
 CLUSTER=$2
 
 cd /vagrant/kube
+MASTER_IP=
 MASTER_IP=$(ifconfig eth0 | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+if [ -z "$MASTER_IP" ]; then
+    MASTER_IP=$(ifconfig enp0s8 | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p')
+fi
+echo "Using $MASTER_IP as the IP address for the Kubernetes master"
 echo $MASTER_IP | tee /vagrant/kube/masterip /vagrant/kube-win/masterip
 
 cd /vagrant/kube/certs
+chmod +x generate-certs.sh
 ./generate-certs.sh $MASTER_IP
 
 cd /vagrant/kube/manifest
+chmod +x generate.py
 ./generate.py $MASTER_IP --cluster-cidr $FULL_CLUSTER
 rm ./generate.py
 

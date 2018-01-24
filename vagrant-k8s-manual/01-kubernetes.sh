@@ -36,7 +36,7 @@ PATH="/vagrant/kube/bin/:$PATH"
 # Changed from $HOME to /vagrant
 DOWNLOAD_DIR="/vagrant/kube/cni-plugins"
 CNI_BIN="/opt/cni/bin/"
-mkdir ${DOWNLOAD_DIR}
+mkdir -p ${DOWNLOAD_DIR}
 cd $DOWNLOAD_DIR
 curl --silent -L $(curl -s https://api.github.com/repos/containernetworking/plugins/releases/latest | grep browser_download_url | grep 'amd64.*tgz' | head -n 1 | cut -d '"' -f 4) -o cni-plugins-amd64.tgz
 tar -xzf cni-plugins-amd64.tgz #removed -v for verbose
