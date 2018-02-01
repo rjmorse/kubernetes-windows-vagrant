@@ -17,6 +17,7 @@ mkdir C:\k\cni
 mkdir C:\k\cni\config
 
 $myhostname=hostname
+$kubesvcpath = "C:\\k\\kubeletsvc"
 
 New-Item -Path $kubesvcpath -Name "kubelet-service.xml" -ItemType File
 $ServiceDefn = @"
@@ -37,4 +38,5 @@ cd C:\build
 docker build -t $pauseimagename -f Dockerfile.pause .
 
 # Start kubelet
-kubelet-service.exe install
+cd C:\k 
+C:\k\kubelet-service.exe install
