@@ -49,10 +49,11 @@ Vagrant.configure("2") do |config|
         subconfig.vm.hostname = vagrant_config['k8s_windows_worker1_vmname']        
         subconfig.vm.network "private_network", type:"dhcp"
         subconfig.vm.synced_folder "bin/", "/vagrant", type: "smb", disabled: false                            
-        subconfig.vm.synced_folder "baseimages/", "/vagrant/baseimages", type: "smb", disabled: false                            
+        subconfig.vm.synced_folder "baseimages/", "/baseimages", type: "smb", disabled: false                            
         #subconfig.vm.provision "file", source: "kubelet-service.xml", destination: "C:kubelet-service.xml"
-        subconfig.vm.provision "file", source: "Dockerfile.pause", destination: "C:\build\Dockerfile.pause"
-        subconfig.vm.provision "file", source: "pause.ps1", destination: "C:\build\pause.ps1"
+        subconfig.vm.provision "shell", path: "mkdir-build-hack.ps1", privileged: true
+        subconfig.vm.provision "file", source: "Dockerfile.pause", destination: "C:\\build\\Dockerfile.pause"
+        subconfig.vm.provision "file", source: "pause.ps1", destination: "C:\\build\\pause.ps1"
         subconfig.vm.provision "shell", path: "00-windows.ps1", :args => ["-PauseImageName", "kubewin/pause"], privileged: true
         subconfig.vm.provision "shell", path: "01-worker.ps1", privileged: true
         subconfig.vm.provider "hyperv" do |h|            

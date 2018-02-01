@@ -1,9 +1,9 @@
-Parameter(
+Param(
   [String]$pauseimagename
 )
 
-docker import \vagrant\baseimages\CBaseOs_rs_onecore_stack_17089.1000.180129-1709_amd64fre_NanoServer_en-us.tar.gz microsoft/nanoserver-insider
-docker import \vagrant\baseimages\CBaseOs_rs_onecore_stack_17089.1000.180129-1709_amd64fre_ServerDatacenterCore_en-us.tar.gz microsoft/windowsservercore-insider
+docker import \baseimages\CBaseOs_rs_onecore_stack_17089.1000.180129-1709_amd64fre_NanoServer_en-us.tar.gz microsoft/nanoserver-insider
+docker import \baseimages\CBaseOs_rs_onecore_stack_17089.1000.180129-1709_amd64fre_ServerDatacenterCore_en-us.tar.gz microsoft/windowsservercore-insider
 
 mkdir C:\k
 copy \vagrant\kubelet.exe C:\k\kubelet.exe
