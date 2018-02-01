@@ -1,0 +1,8 @@
+<service>
+      <id>kubelet</id>
+      <name>kubelet</name>
+      <description>This service runs kubelet.</description>
+      <executable>C:\k\kubelet.exe</executable>
+      <arguments>--hostname-override=kubeadm-worker-windows-3 --v=6 --pod-infra-container-image=kubeletwin/pause --resolv-conf="" --allow-privileged=true --enable-debugging-handlers --cluster-dns=10.96.0.10 --cluster-domain=cluster.local --bootstrap-kubeconfig="C:\etc\kubernetes\bootstrap-kubelet.conf" --kubeconfig=c:\k\config --hairpin-mode=promiscuous-bridge --image-pull-progress-deadline=20m --cgroups-per-qos=false --enforce-node-allocatable="" --network-plugin=cni --cni-bin-dir="c:\k\cni" --cni-conf-dir "c:\k\cni\config"</arguments>
+      <logmode>rotate</logmode>
+</service>

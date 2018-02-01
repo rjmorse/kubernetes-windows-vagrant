@@ -1,16 +1,13 @@
-$VirtualSwitchName = "External"
+$VirtualSwitchName = "SA18Lab"
 
-IMAGE = "WindowsServer1709-Containers"
+IMAGE = "ws_stack"
 
 Vagrant.configure("2") do |config|
     config.vm.define "k-worker1" do |subconfig|
         subconfig.vm.box = IMAGE
         subconfig.vm.communicator = "winrm"
         subconfig.vm.hostname = "k-worker1"
-        subconfig.vm.network :public_network, bridge: $VirtualSwitchName
-        #subconfig.vm.synced_folder "../vagrant-synced/kube-win", "c:/k/", type: "smb"
-        subconfig.vm.provision "file", source: "../vagrant-synced/kube-win/*", destination: "c:/k/"
-        subconfig.vm.provision "shell", path: "./provision.ps1", privileged: true
+        subconfig.vm.network :public_network, bridge: $VirtualSwitchName        
         subconfig.vm.provider "hyperv" do |h|
             h.enable_virtualization_extensions = true
             h.differencing_disk = true
@@ -18,6 +15,7 @@ Vagrant.configure("2") do |config|
             h.memory = 1024
             h.maxmemory = 4096
             h.vmname = "k-worker1"
+            h.vlan_id = 7
         end   
     end
 end
