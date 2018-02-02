@@ -8,6 +8,7 @@ docker import \baseimages\CBaseOs_rs_onecore_stack_17089.1000.180129-1709_amd64f
 mkdir C:\k
 copy \vagrant\kubelet.exe C:\k\kubelet.exe
 copy \vagrant\kube-proxy.exe C:\k\kube-proxy.exe
+copy \vagrant\kubeadm.exe C:\k\kubeadm.exe
 
 mkdir C:\k\kubeletsvc 
 cd C:\k\kubeletsvc
@@ -38,5 +39,5 @@ cd C:\build
 docker build -t $pauseimagename -f Dockerfile.pause .
 
 # Start kubelet
-cd C:\k 
-C:\k\kubelet-service.exe install
+cd C:\k\kubeletsvc
+C:\k\kubeletsvc\kubelet-service.exe install
