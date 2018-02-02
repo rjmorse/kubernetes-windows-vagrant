@@ -1,0 +1,10 @@
+configs:
+    use: 'SA18Lab'    
+    SA18Lab:
+        k8s_master_vmname: 'k8s-centos-master-test'
+        k8s_linux_worker1_vmname: 'k8s-centos-worker1-test'
+        k8s_linux_worker2_vmname: 'k8s-centos-worker2-test'
+        k8s_windows_worker1_vmname: 'k8s-windows-worker1-test'
+        k8s_windows_worker2_vmname: 'k8s-windows-worker2-test'
+        windows_box_name: 'ws_stack'
+        linux_box_name: 'centos/7'

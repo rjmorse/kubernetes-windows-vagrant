@@ -1,0 +1,69 @@
+require 'yaml'
+
+current_dir    = File.dirname(File.expand_path(__FILE__))
+configs        = YAML.load_file("#{current_dir}/config.yaml")
+vagrant_config = configs['configs'][configs['configs']['use']]
+
+Vagrant.configure("2") do |config|
+    
+    config.vm.define vagrant_config['k8s_master_vmname'] do |subconfig|
+        subconfig.vm.box = vagrant_config['linux_box_name']
+        subconfig.vm.hostname = vagrant_config['k8s_master_vmname']        
+        subconfig.vm.network "private_network", type:"dhcp"
+        subconfig.vm.synced_folder ".", "/vagrant", disabled: true                
+        subconfig.vm.provision "shell", path: "00-centos-lis.sh"
+        subconfig.vm.provision "shell", path: "01-docker.sh"        
+        subconfig.vm.provision "shell", path: "02-kubernetes.sh"        
+        subconfig.vm.provision "shell", path: "03-master-flannel.sh"
+        subconfig.vm.provider "hyperv" do |h|            
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 4096
+            h.maxmemory = 4096
+            h.vmname = vagrant_config['k8s_master_vmname']
+            h.vlan_id = 7
+        end   
+    end
+
+    config.vm.define vagrant_config['k8s_linux_worker1_vmname'] do |subconfig|
+        subconfig.vm.box = vagrant_config['linux_box_name']
+        subconfig.vm.hostname = vagrant_config['k8s_linux_worker1_vmname']        
+        subconfig.vm.network "private_network", type:"dhcp"
+        subconfig.vm.synced_folder ".", "/vagrant", disabled: true     
+        subconfig.vm.provision "shell", path: "00-centos-lis.sh"           
+        subconfig.vm.provision "shell", path: "01-docker.sh"        
+        subconfig.vm.provision "shell", path: "02-kubernetes.sh"        
+        subconfig.vm.provision "shell", path: "03-worker.sh"
+        subconfig.vm.provider "hyperv" do |h|            
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 4096
+            h.maxmemory = 4096
+            h.vmname = vagrant_config['k8s_linux_worker1_vmname']
+            h.vlan_id = 7
+        end   
+    end
+
+    config.vm.define vagrant_config['k8s_windows_worker1_vmname'] do |subconfig|
+        subconfig.vm.box = vagrant_config['windows_box_name']
+        subconfig.vm.hostname = vagrant_config['k8s_windows_worker1_vmname']        
+        subconfig.vm.network "private_network", type:"dhcp"
+        subconfig.vm.synced_folder "bin/", "/vagrant", type: "smb", disabled: false                            
+        subconfig.vm.synced_folder "baseimages/", "/baseimages", type: "smb", disabled: false                            
+        #subconfig.vm.provision "file", source: "kubelet-service.xml", destination: "C:kubelet-service.xml"
+        subconfig.vm.provision "shell", path: "mkdir-build-hack.ps1", privileged: true
+        subconfig.vm.provision "file", source: "Dockerfile.pause", destination: "C:\\build\\Dockerfile.pause"
+        subconfig.vm.provision "file", source: "pause.ps1", destination: "C:\\build\\pause.ps1"
+        subconfig.vm.provision "shell", path: "00-windows.ps1", :args => ["-PauseImageName", "kubewin/pause"], privileged: true
+        subconfig.vm.provision "shell", path: "01-worker.ps1", privileged: true
+        subconfig.vm.provider "hyperv" do |h|            
+            h.differencing_disk = true
+            h.cpus = 4
+            h.memory = 4096
+            h.maxmemory = 4096
+            h.vmname = vagrant_config['k8s_windows_worker1_vmname']
+            h.vlan_id = 7
+        end   
+    end
+    
+end
